@@ -211,7 +211,7 @@ else
   $ECHO "   - $fileName3 \e[31m[ERROR]\e[0m"
 fi
 
-$ECHO "* Cambiando los permisos de los archivos (755 y 644)"
+$ECHO "* Changing the permissions of the files (755 and 644):"
 chmod 644 $fileName1
 if [ "$?" -eq 0 ]; then
   $ECHO "   - $fileName1 (644) \e[32m[OK]\e[0m"
