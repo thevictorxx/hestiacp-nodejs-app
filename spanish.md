@@ -2,13 +2,13 @@
 
 La ejecución de aplicaciones de Node en HestiaCP puede llegar a ser un poco complicado, con este script crearas un *template* dentro de HestiaCP que podrá ser seleccionado por medio de las **plantillas de proxy** dentro de la configuración del dominio.
 
-![proxy_template_example](.\img\001.png)
+![proxy_template_example](/img/001.png)
 
 ## ¿Cómo funciona?
 
 Realiza un `proxy pass` de todas las peticiones que llegan al dominio hacia el puerto en el que corre la aplicación, además crea una carpeta en el directorio para el almacenamiento de la aplicación misma.
 
-![folder_nodeapp](.\img\002.png)
+![folder_nodeapp](/img/002.png)
 
 > Por el momento no corre ningún script automático para la ejecución de la aplicación, pero se recomienda la utilización de [PM2](https://pm2.keymetrics.io/).
 
@@ -42,7 +42,7 @@ sudo ./create.sh -p 3000
 
 #### Post ejecución 
 
-![script_execution](.\img\003.png)
+![script_execution](/img/003.png)
 
 
 
