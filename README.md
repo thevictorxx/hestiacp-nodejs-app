@@ -1,6 +1,6 @@
 # HestiaCP with NodeJS Application
 
-👍 [Version en Español](./spanish.md)
+👍 [Versión en Español](./spanish.md)
 
 Running Node applications on HestiaCP can become a bit complicated, with this script you will create a template within HestiaCP that can be selected through the proxy templates within the domain configuration.
 
