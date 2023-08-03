@@ -75,43 +75,50 @@ fi
 $ECHO "* Creating files:"
 #FILE .tpl
 $ECHO "server {
-    listen      %ip%:%proxy_port%;
-    server_name %domain_idn% %alias_idn%;
-    
-    include %home%/%user%/conf/web/%domain%/nginx.forcessl.conf*;
-    error_log  /var/log/%web_system%/domains/%domain%.error.log error;
-    location / {
-        proxy_pass http://127.0.0.1:$port;
-        
-        location ~* ^.+\.(%proxy_extensions%)$ {
-            root           %docroot%;
-            access_log     /var/log/%web_system%/domains/%domain%.log combined;
-            access_log     /var/log/%web_system%/domains/%domain%.bytes bytes;
-            expires        max;
-            try_files      \$uri @fallback;
+        listen      %ip%:%proxy_port%;
+        server_name %domain_idn% %alias_idn%;
+        error_log   /var/log/%web_system%/domains/%domain%.error.log error;
+
+        include %home%/%user%/conf/web/%domain%/nginx.forcessl.conf*;
+
+        location ~ /\.(?!well-known\/|file) {
+                deny all;
+                return 404;
         }
-    }
 
-    location /error/ {
-        alias   %home%/%user%/web/%domain%/document_errors/;
-    }
+        location / {
+                proxy_pass http://127.0.0.1:$port;
 
-    location @fallback {
-        proxy_pass http://127.0.0.1:$port;
-    }
+                location ~* ^.+\.(%proxy_extensions%)$ {
+                        try_files  \$uri @fallback;
 
-    location ~ /\.ht    {return 404;}
-    location ~ /\.svn/  {return 404;}
-    location ~ /\.git/  {return 404;}
-    location ~ /\.hg/   {return 404;}
-    location ~ /\.bzr/  {return 404;}
-    location ~ /\.(?!well-known\/|file) {
-       deny all;
-       return 404;
-    }
+                        root       %docroot%;
+                        access_log /var/log/%web_system%/domains/%domain%.log combined;
+                        access_log /var/log/%web_system%/domains/%domain%.bytes bytes;
 
-    include %home%/%user%/conf/web/%domain%/nginx.conf_*;
-    
+                        expires    max;
+                }
+        }
+
+        location @fallback {
+                proxy_pass http://127.0.0.1:$port;
+        }
+
+        location /error/ {
+                alias %home%/%user%/web/%domain%/document_errors/;
+        }
+
+        location ~ /\.ht    {return 404;}
+        location ~ /\.svn/  {return 404;}
+        location ~ /\.git/  {return 404;}
+        location ~ /\.hg/   {return 404;}
+        location ~ /\.bzr/  {return 404;}
+        location ~ /\.(?!well-known\/|file) {
+                deny all;
+                return 404;
+        }
+
+        include %home%/%user%/conf/web/%domain%/nginx.conf_*;
 }" >> $fileName1
 if [ "$?" -eq 0 ]; then
   $ECHO "   - $fileName1 \e[32m[OK]\e[0m"
@@ -121,70 +128,61 @@ fi
 
 
 $ECHO "server {
-    listen      %ip%:%proxy_port%;
-    server_name %domain_idn% %alias_idn%;
-    return      301 https://%domain_idn%$request_uri;
-}
+        listen      %ip%:%proxy_ssl_port% ssl;
+        server_name %domain_idn% %alias_idn%;
+        error_log   /var/log/%web_system%/domains/%domain%.error.log error;
 
-server {
-    listen      %ip%:%proxy_ssl_port%;
-    
-    server_name %domain_idn%;
-    
-    ssl on;
-    ssl_certificate      %ssl_pem%;
-    ssl_certificate_key  %ssl_key%;
+        ssl_certificate     %ssl_pem%;
+        ssl_certificate_key %ssl_key%;
+        ssl_stapling        on;
+        ssl_stapling_verify on;
 
-    error_log  /var/log/%web_system%/domains/%domain%.error.log error;
-    
-    gzip on;
-    gzip_min_length  1100;
-    gzip_buffers  4 32k;
-    gzip_types    image/svg+xml svg svgz text/plain application/x-javascript text/xml text/css;
-    gzip_vary on;
-    
-    include %home%/%user%/conf/web/%domain%/nginx.hsts.conf*;
+        # TLS 1.3 0-RTT anti-replay
+        if (\$anti_replay = 307) { return 307 https://\$host\$request_uri; }
+        if (\$anti_replay = 425) { return 425; }
 
-    location / {
+        include %home%/%user%/conf/web/%domain%/nginx.hsts.conf*;
 
-        proxy_pass http://127.0.0.1:$port;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header Host \$host;
-        proxy_set_header X-NginX-Proxy true;
-        proxy_cache_bypass \$http_upgrade;
-
-        location ~* ^.+\.(%proxy_extensions%)$ {
-            root           %sdocroot%;
-            access_log     /var/log/%web_system%/domains/%domain%.log combined;
-            access_log     /var/log/%web_system%/domains/%domain%.bytes bytes;
-            expires        max;
-            try_files      \$uri @fallback;
-        add_header Pragma public;
-            add_header Cache-Control \"public\";
+        location ~ /\.(?!well-known\/|file) {
+                deny all;
+                return 404;
         }
-    }
 
-    location /error/ {
-        alias   %home%/%user%/web/%domain%/document_errors/;
-    }
+        location / {
+                proxy_pass http://127.0.0.1:$port;
 
-    location @fallback {
-        proxy_pass http://127.0.0.1:$port;
-    }
+                location ~* ^.+\.(%proxy_extensions%)$ {
+                        try_files  \$uri @fallback;
 
-    location ~ /\.ht    {return 404;}
-    location ~ /\.svn/  {return 404;}
-    location ~ /\.git/  {return 404;}
-    location ~ /\.hg/   {return 404;}
-    location ~ /\.bzr/  {return 404;}
-    location ~ /\.(?!well-known\/|file) {
-      deny all;
-      return 404;
-   }
+                        root       %sdocroot%;
+                        access_log /var/log/%web_system%/domains/%domain%.log combined;
+                        access_log /var/log/%web_system%/domains/%domain%.bytes bytes;
 
-    include %home%/%user%/conf/web/%domain%/nginx.ssl.conf_*;
+                        expires    max;
+                }
+        }
+
+        location @fallback {
+                proxy_pass http://127.0.0.1:$port;
+        }
+
+        location /error/ {
+                alias %home%/%user%/web/%domain%/document_errors/;
+        }
+
+        location ~ /\.ht    {return 404;}
+        location ~ /\.svn/  {return 404;}
+        location ~ /\.git/  {return 404;}
+        location ~ /\.hg/   {return 404;}
+        location ~ /\.bzr/  {return 404;}
+        location ~ /\.(?!well-known\/|file) {
+                deny all;
+                return 404;
+        }
+
+        proxy_hide_header Upgrade;
+
+        include %home%/%user%/conf/web/%domain%/nginx.ssl.conf_*;
 }" >> $fileName2
 if [ "$?" -eq 0 ]; then
   $ECHO "   - $fileName2 \e[32m[OK]\e[0m"
