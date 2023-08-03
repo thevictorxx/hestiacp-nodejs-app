@@ -1,5 +1,7 @@
 # HestiaCP con Aplicaccion de Nodejs
 
+👍 [English Version](./README.md)
+
 La ejecución de aplicaciones de Node en HestiaCP puede llegar a ser un poco complicado, con este script crearas un *template* dentro de HestiaCP que podrá ser seleccionado por medio de las **plantillas de proxy** dentro de la configuración del dominio.
 
 ![proxy_template_example](/img/001.png)
